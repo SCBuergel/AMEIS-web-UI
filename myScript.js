@@ -33,13 +33,11 @@ function activateRecSite(index) {
 	activeChamber = index;
 	console.log("activating recording site " + index);
 	renderPadHighlight();
-	/*
 	$.ajax({
 		url: "http://localhost:8080/switch?chamber=" + index,
 		dataType: "jsonp",
 		jsonpCallback: "debugCallBack"
 	});
-	*/
 }
 
 function doCycle() {
@@ -125,6 +123,7 @@ var chamberConfig = [
   }
   ];
 
+  
 var recSites;
 var cycleTimeout;
 var cycleInfo;
@@ -145,6 +144,10 @@ $(document).ready(function(){
 	});
 	
 	$("#updateSitesBtn").click(function() {
+		$("#updateSitesBtn").prop("disabled", true).addClass("ui-state-disabled");
+		
+		// disable button for 3 seconds to prevent hickups of the Arduino when sending switch sequence too fast
+		setTimeout(function(){$("#updateSitesBtn").prop("disabled", false).removeClass("ui-state-disabled")}, 3000);
 		cycleInfo = [];
 		var totalCycleTime = 0;
 		for (var c = 0; c < recSites.length; c++) {
