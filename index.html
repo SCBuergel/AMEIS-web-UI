@@ -7,13 +7,22 @@
 		<link rel="stylesheet" type="text/css" href="assets/bootstrap-3.3.7/bootstrap-theme.min.css">
 	</head>
 	<body>
+		<div id="warning" class="alert alert-danger">
+			<strong>WARNING!</strong> Experiment running...
+		</div>
+
+		<div id="error" class="alert alert-warning alert-dismissible">
+			<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+			<strong>ERROR!</strong> You first need to stop the active measurement cycle.
+		</div>
+
 		<div class="container-fluid">
 			<div clas="row">
 				<div class="col-md-4">
 					<div class="panel panel-default">
 						<div class="panel-heading">Settings</div>
 						<div id="settings" class="panel-body">
-							<button id="updateSitesBtn" type="button" class="btn btn-default">start</button>
+							<button id="startBtn" type="button" class="btn btn-default">start</button>
 							<button id="stopBtn" type="button" class="btn btn-default">stop</button>
 							<button id="testBtn" type="button" class="btn btn-default">test</button>
 							<button id="tiltBtn" type="button" class="btn btn-default">tilt</button>

@@ -23,7 +23,7 @@ function renderPadHighlight() {
 	var yOffsetPads = 310;
 	
 	for (var c = 0; c < recSites.length; c++) {
-		$("#chip").append("<img src='assets/images/blackCircle.png' id='recSiteInactive" + c + "' style='left: " + (xOffsetRecSites +
+		$("#chip").append("<img src='assets/images/blackCircle.png' name='" + c + "' id='recSiteInactive" + c + "' class='inactiveRecSite' style='left: " + (xOffsetRecSites +
 		recSiteScreenPosition[c].x) + "px; top: " + (yOffsetRecSites + recSiteScreenPosition[c].y) + "px; position:absolute'>");
 		$("#chip").append("<img src='assets/images/greenCircle.png' id='recSiteActive" + c + "' class='activeHighlighters' style='left: " + (xOffsetRecSites +
 		recSiteScreenPosition[c].x) + "px; top: " + (yOffsetRecSites + recSiteScreenPosition[c].y) + "px; position:absolute'>");
@@ -36,6 +36,13 @@ function renderPadHighlight() {
 		$("#pcb").append("<img src='assets/images/red.png' id='recPadActive" + c + "' class='activeHighlighters' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads - 5 * recSites[c].recPadId) + "px; position:absolute'>");
 		$("#recPadActive" + c).hide();
 	}
+	
+	$(".inactiveRecSite").click(function(e) {
+		if (allCycleTimeouts.length == 0)
+			activateRecSite(e.target.name);
+		else
+			$("#error").show(1000).delay(5000).hide(1000);
+	});
 }
 
 function activateRecSite(index) {
@@ -54,11 +61,11 @@ function chamberActivateCallbackHandler(data) {
 	
 	// active chamber is a global variable
 	console.log("activating recording site " + activeChamber);
-	$(".activeHighlighters").delay(2000).fadeOut(500);
+	$(".activeHighlighters").fadeOut(500);
 	console.log($("#recSiteActive" + activeChamber));
-	$("#recSiteActive" + activeChamber).delay(2000).fadeIn(500);
-	$("#stimPadActive" + activeChamber).delay(2000).fadeIn(500);
-	$("#recPadActive" + activeChamber).delay(2000).fadeIn(500);
+	$("#recSiteActive" + activeChamber).fadeIn(500);
+	$("#stimPadActive" + activeChamber).fadeIn(500);
+	$("#recPadActive" + activeChamber).fadeIn(500);
 }
 
 function doCycle() {
@@ -74,6 +81,7 @@ function killAllTimeouts() {
 		clearTimeout(allCycleTimeouts[c]);
 	}
 	clearTimeout(cycleTimeout);
+	allCycleTimeouts = [];
 }
   
 var recSites;
@@ -82,7 +90,11 @@ var cycleInfo;
 var allCycleTimeouts = [];
 var activeChamber;
 
+// everything below here is being executed on page load (once)
 $(document).ready(function(){
+	$("#warning").hide();
+	$("#error").hide();
+	
     $.ajax({
         url: "http://localhost:8080/getNumRecordingSites",
         dataType: "jsonp",
@@ -91,8 +103,7 @@ $(document).ready(function(){
 		
 	$("#stopBtn").click(function() {
 		killAllTimeouts();
-		//activeChamber = -1;
-		//renderPadHighlight();
+		$("#warning").hide();
 	});
 	
 	$("#testBtn").click(function() {
@@ -111,11 +122,12 @@ $(document).ready(function(){
 		});
 	});
 	
-	$("#updateSitesBtn").click(function() {
-		$("#updateSitesBtn").prop("disabled", true).addClass("ui-state-disabled");
-		
+	$("#startBtn").click(function() {
+		$("#startBtn").prop("disabled", true).addClass("ui-state-disabled");
+		$("#warning").show();
+
 		// disable button for 3 seconds to prevent hickups of the Arduino when sending switch sequence too fast
-		setTimeout(function(){$("#updateSitesBtn").prop("disabled", false).removeClass("ui-state-disabled")}, 3000);
+		setTimeout(function(){$("#startBtn").prop("disabled", false).removeClass("ui-state-disabled")}, 3000);
 		cycleInfo = [];
 		var totalCycleTime = 0;
 		for (var c = 0; c < recSites.length; c++) {
