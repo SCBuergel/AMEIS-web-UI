@@ -1,52 +1,55 @@
 function logResults(data) {
+	// this is used as a callback function of AJAX call which is called once during initial loading of page
 	recSites = data;
 	$("#chipConfig").val(JSON.stringify(data));
     console.log(data);
 	renderPadHighlight();
 	for (var c = 0; c < data.length; c++) {
-		$("#chip").append("<div>recording site " + c + ":<input id='recSiteChecked" + c + "' type='checkbox'><input id='recSiteTime" + c + "' type='textbox' value='10'></div>");
+		$("#settings").append("<div>recording site " + c + ":<input id='recSiteChecked" + c + "' type='checkbox'><input id='recSiteTime" + c + "' type='textbox' value='10'></div>");
 	}
 }
 
 function renderPadHighlight() {
-	var xOffset = 525;
-	var yOffset = 182;
+	var xOffsetRecSites = 80;
+	var yOffsetRecSites = 82;
+
+	var xOffsetPads = 120;
+	var yOffsetPads = 165;
 	
 	for (var c = 0; c < recSites.length; c++) {
+		$("#chip").append("<img src='assets/images/blackCircle.png' id='recSiteInactive" + c + "' style='left: " + (xOffsetRecSites +
+		chamberConfig[c].x) + "px; top: " + (yOffsetRecSites + chamberConfig[c].y) + "px; position:absolute'>");
+		$("#chip").append("<img src='assets/images/greenCircle.png' id='recSiteActive" + c + "' class='activeHighlighters' style='left: " + (xOffsetRecSites +
+		chamberConfig[c].x) + "px; top: " + (yOffsetRecSites + chamberConfig[c].y) + "px; position:absolute'>");
+		$("#recSiteActive" + c).hide();
 		
-		$("#chip").append("<img src='blackCircle.png' style='left: " + (xOffset +
-		chamberConfig[c].x) + "px; top: " + (yOffset + chamberConfig[c].y) + "px; position:absolute'>");
-		
-		$("#chip").append("<img src='black.png' style='left: " + 390 + "px; top: " + (160 + 5 * recSites[c].stimPadId) + "px; position:absolute'>");
-		$("#chip").append("<img src='black.png' style='left: " + 390 + "px; top: " + (160 + 5 * recSites[c].recPadId) + "px; position:absolute'>");
-	}
-	if (activeChamber > -1) {
-		$("#chip").append("<img src='greenCircle.png' style='left: " + (xOffset +
-		chamberConfig[activeChamber].x) + "px; top: " + (yOffset + chamberConfig[activeChamber].y) + "px; position:absolute'>");
-
-		$("#chip").append("<img src='blue.png' style='left: " + 390 + "px; top: " + (160 + 5 * recSites[activeChamber].stimPadId) + "px; position:absolute'>");
-		$("#chip").append("<img src='red.png' style='left: " + 390 + "px; top: " + (160 + 5 * recSites[activeChamber].recPadId) + "px; position:absolute'>");
+		$("#pcb").append("<img src='assets/images/black.png' id='stimPadInactive" + c + "' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads + 5 * recSites[c].stimPadId) + "px; position:absolute'>");
+		$("#pcb").append("<img src='assets/images/black.png' id='recPadInactive" + c + "' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads + 5 * recSites[c].recPadId) + "px; position:absolute'>");
+		$("#pcb").append("<img src='assets/images/blue.png' id='stimPadActive" + c + "' class='activeHighlighters' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads + 5 * recSites[c].stimPadId) + "px; position:absolute'>");
+		$("#stimPadActive" + c).hide();
+		$("#pcb").append("<img src='assets/images/red.png' id='recPadActive" + c + "' class='activeHighlighters' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads + 5 * recSites[c].recPadId) + "px; position:absolute'>");
+		$("#recPadActive" + c).hide();
 	}
 }
 
-function activateRecSite(index) {
-	activeChamber = index;
-	console.log("activating recording site " + index);
-	renderPadHighlight();
+function activateRecSite(activeChamber) {
+	console.log("activating recording site " + activeChamber);
+	$(".activeHighlighters").fadeOut(500);
+	console.log($("#recSiteActive" + activeChamber));
+	$("#recSiteActive" + activeChamber).fadeIn(500);
+	$("#stimPadActive" + activeChamber).fadeIn(500);
+	$("#recPadActive" + activeChamber).fadeIn(500);
 	$.ajax({
-		url: "http://localhost:8080/switch?chamber=" + index,
+		url: "http://localhost:8080/switch?chamber=" + activeChamber,
 		dataType: "jsonp",
 		jsonpCallback: "debugCallBack"
 	});
 }
 
 function doCycle() {
-	//console.log("Hello Ketki!");
 	allCycleTimeouts = [];
 	for (var c = 0; c < cycleInfo.length; c++) {
 		allCycleTimeouts[c] = setTimeout(activateRecSite, cycleInfo[c].startTime * 1000, cycleInfo[c].recSiteIndex);
-		//console.log("site: " + cycleInfo[c].recSiteIndex + 
-		//	", start: " + cycleInfo[c].startTime * 1000);
 	}
 }
 
