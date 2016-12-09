@@ -1,49 +1,64 @@
 function logResults(data) {
 	// this is used as a callback function of AJAX call which is called once during initial loading of page
-	recSites = data;
+	recSites = data.chamberToPad;
+	
+	recSiteScreenPosition = data.recSiteScreenPosition;
+	// for a new setting file, replace data.recSiteScreenPosition by parts of the json:
+	// recSiteScreenPosition = [{"x": 425,"y": 35....
+	
 	$("#chipConfig").val(JSON.stringify(data));
-    console.log(data);
+	$("#chip").append("<img src='assets/images/" + data.chipImageName + "'>");
 	renderPadHighlight();
-	for (var c = 0; c < data.length; c++) {
+	for (var c = 0; c < recSites.length; c++) {
 		$("#settings").append("<div>recording site " + c + ":<input id='recSiteChecked" + c + "' type='checkbox'><input id='recSiteTime" + c + "' type='textbox' value='10'></div>");
 	}
 }
 
 function renderPadHighlight() {
+	// renders pads on PCB and recording sites (only on first load of page)
 	var xOffsetRecSites = 80;
 	var yOffsetRecSites = 82;
 
 	var xOffsetPads = 120;
-	var yOffsetPads = 165;
+	var yOffsetPads = 310;
 	
 	for (var c = 0; c < recSites.length; c++) {
 		$("#chip").append("<img src='assets/images/blackCircle.png' id='recSiteInactive" + c + "' style='left: " + (xOffsetRecSites +
-		chamberConfig[c].x) + "px; top: " + (yOffsetRecSites + chamberConfig[c].y) + "px; position:absolute'>");
+		recSiteScreenPosition[c].x) + "px; top: " + (yOffsetRecSites + recSiteScreenPosition[c].y) + "px; position:absolute'>");
 		$("#chip").append("<img src='assets/images/greenCircle.png' id='recSiteActive" + c + "' class='activeHighlighters' style='left: " + (xOffsetRecSites +
-		chamberConfig[c].x) + "px; top: " + (yOffsetRecSites + chamberConfig[c].y) + "px; position:absolute'>");
+		recSiteScreenPosition[c].x) + "px; top: " + (yOffsetRecSites + recSiteScreenPosition[c].y) + "px; position:absolute'>");
 		$("#recSiteActive" + c).hide();
 		
-		$("#pcb").append("<img src='assets/images/black.png' id='stimPadInactive" + c + "' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads + 5 * recSites[c].stimPadId) + "px; position:absolute'>");
-		$("#pcb").append("<img src='assets/images/black.png' id='recPadInactive" + c + "' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads + 5 * recSites[c].recPadId) + "px; position:absolute'>");
-		$("#pcb").append("<img src='assets/images/blue.png' id='stimPadActive" + c + "' class='activeHighlighters' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads + 5 * recSites[c].stimPadId) + "px; position:absolute'>");
+		$("#pcb").append("<img src='assets/images/black.png' id='stimPadInactive" + c + "' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads - 5 * recSites[c].stimPadId) + "px; position:absolute'>");
+		$("#pcb").append("<img src='assets/images/black.png' id='recPadInactive" + c + "' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads - 5 * recSites[c].recPadId) + "px; position:absolute'>");
+		$("#pcb").append("<img src='assets/images/blue.png' id='stimPadActive" + c + "' class='activeHighlighters' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads - 5 * recSites[c].stimPadId) + "px; position:absolute'>");
 		$("#stimPadActive" + c).hide();
-		$("#pcb").append("<img src='assets/images/red.png' id='recPadActive" + c + "' class='activeHighlighters' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads + 5 * recSites[c].recPadId) + "px; position:absolute'>");
+		$("#pcb").append("<img src='assets/images/red.png' id='recPadActive" + c + "' class='activeHighlighters' style='left: " + xOffsetPads + "px; top: " + (yOffsetPads - 5 * recSites[c].recPadId) + "px; position:absolute'>");
 		$("#recPadActive" + c).hide();
 	}
 }
 
-function activateRecSite(activeChamber) {
-	console.log("activating recording site " + activeChamber);
-	$(".activeHighlighters").fadeOut(500);
-	console.log($("#recSiteActive" + activeChamber));
-	$("#recSiteActive" + activeChamber).fadeIn(500);
-	$("#stimPadActive" + activeChamber).fadeIn(500);
-	$("#recPadActive" + activeChamber).fadeIn(500);
+function activateRecSite(index) {
+	// this is setting the active chamber to node.js which is sending it to the Arduino
+	
+	activeChamber = index; // active chamber is a global variable
 	$.ajax({
-		url: "http://localhost:8080/switch?chamber=" + activeChamber,
+		url: "http://localhost:8080/switch?chamber=" + index,
 		dataType: "jsonp",
-		jsonpCallback: "debugCallBack"
+		jsonpCallback: "chamberActivateCallbackHandler"
 	});
+}
+
+function chamberActivateCallbackHandler(data) {
+	// callback function handler that updates UI
+	
+	// active chamber is a global variable
+	console.log("activating recording site " + activeChamber);
+	$(".activeHighlighters").delay(2000).fadeOut(500);
+	console.log($("#recSiteActive" + activeChamber));
+	$("#recSiteActive" + activeChamber).delay(2000).fadeIn(500);
+	$("#stimPadActive" + activeChamber).delay(2000).fadeIn(500);
+	$("#recPadActive" + activeChamber).delay(2000).fadeIn(500);
 }
 
 function doCycle() {
@@ -60,72 +75,6 @@ function killAllTimeouts() {
 	}
 	clearTimeout(cycleTimeout);
 }
-
-var chamberConfig = [
-  {
-    "x": 0,
-    "y": 0
-  },
-  {
-    "x": 67,
-    "y": 0
-  },
-  {
-    "x": 134,
-    "y": 0
-  },
-  {
-    "x": 205,
-    "y": 0
-  },
-  {
-    "x": 275,
-    "y": 0
-  },
-
-  {
-    "x": 0,
-    "y": 50
-  },
-  {
-    "x": 67,
-    "y": 50
-  },
-  {
-    "x": 134,
-    "y": 50
-  },
-  {
-    "x": 205,
-    "y": 50
-  },
-  {
-    "x": 275,
-    "y": 50
-  },
-
-  {
-    "x": 0,
-    "y": 95
-  },
-  {
-    "x": 67,
-    "y": 95
-  },
-  {
-    "x": 134,
-    "y": 95
-  },
-  {
-    "x": 205,
-    "y": 95
-  },
-  {
-    "x": 275,
-    "y": 95
-  }
-  ];
-
   
 var recSites;
 var cycleTimeout;
@@ -144,6 +93,22 @@ $(document).ready(function(){
 		killAllTimeouts();
 		//activeChamber = -1;
 		//renderPadHighlight();
+	});
+	
+	$("#testBtn").click(function() {
+		$.ajax({
+			url: "http://localhost:8080/test",
+			dataType: "jsonp",
+			jsonpCallback: "noCallBack"
+		});
+	});
+	
+	$("#tiltBtn").click(function() {
+		$.ajax({
+			url: "http://localhost:8080/tilt",
+			dataType: "jsonp",
+			jsonpCallback: "noCallBack"
+		});
 	});
 	
 	$("#updateSitesBtn").click(function() {
